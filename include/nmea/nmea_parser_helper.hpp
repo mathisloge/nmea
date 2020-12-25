@@ -8,6 +8,13 @@ namespace nmea::detail
 {
     using AllNmeaMessages = boost::variant<NmeaDTM, NmeaGLL, NmeaUnsupported>;
 
+    enum class ParseResult
+    {
+        ok,
+        failed,
+        crc_invalid
+    };
+
     template <typename Iterator>
     uint8_t nmea0183_checksum(Iterator first, Iterator last)
     {
@@ -20,7 +27,7 @@ namespace nmea::detail
     }
 
     template <typename Iterator>
-    bool parse_nmea(Iterator &first, Iterator last, AllNmeaMessages &msg_instance)
+    ParseResult parse_nmea(Iterator &first, Iterator last, AllNmeaMessages &msg_instance)
     {
         Iterator mem_first = first;
         Iterator mem_last = last;
@@ -29,15 +36,15 @@ namespace nmea::detail
         sentence_gll_grammar<Iterator> sentence_gll;
         sentence_unsupported_grammar<Iterator> sentence_unsupported;
         using qi::parse;
-        using qi::uint_parser;
         using qi::skip;
+        using qi::uint_parser;
 
         uint8_t checksum = 0;
-        bool r = parse(first, last,
-                              //  Begin grammar
-                              ('$' >> (sentence_dtm | sentence_gll | sentence_unsupported) >> '*' >> uint_parser<uint8_t, 16, 1, 2>() >> "\r\n"),
-                              //  End grammar
-                              msg_instance, checksum);
+        const bool r = parse(first, last,
+                       //  Begin grammar
+                       ('$' >> (sentence_dtm | sentence_gll | sentence_unsupported) >> '*' >> uint_parser<uint8_t, 16, 1, 2>() >> "\r\n"),
+                       //  End grammar
+                       msg_instance, checksum);
 
         if (r)
         {
@@ -45,10 +52,10 @@ namespace nmea::detail
             if (calc_check != checksum)
             {
                 std::cout << "checksum mismatch: " << (calc_check == checksum) << " calc: " << static_cast<int>(calc_check) << " got " << static_cast<int>(checksum) << std::endl;
-                return false;
+                return ParseResult::crc_invalid;
             }
         }
-        return r;
+        return r ? ParseResult::ok : ParseResult::failed;
     }
 
 } // namespace nmea::detail

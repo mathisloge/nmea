@@ -15,7 +15,6 @@ public:
 TEST_CASE("simple single messages", "[single]")
 {
     Handler handler;
-    nmea::detail::AllNmeaMessages msg_var;
     SECTION("DTM")
     {
         std::string data = "$GPDTM,999,,0.08,N,0.07,E,-47.7,W84*1B\r\n";
@@ -43,6 +42,14 @@ TEST_CASE("simple single messages", "[single]")
     SECTION("not valid - missing end")
     {
         std::string data = "$GLGSV,3,2,09,79,17,167,,80,65,215,,81,33,049,,82,82,345,,3*71";
+        auto it = data.begin();
+        nmea::parseOneWithDispatch(it, data.end(), handler);
+        REQUIRE(it == data.begin());
+        REQUIRE(handler.got_msg.empty());
+    }
+    SECTION("not valid - missing start")
+    {
+        std::string data = "GLGSV,3,2,09,79,17,167,,80,65,215,,81,33,049,,82,82,345,,3*71\r\n";
         auto it = data.begin();
         nmea::parseOneWithDispatch(it, data.end(), handler);
         REQUIRE(it == data.begin());
