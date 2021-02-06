@@ -53,10 +53,10 @@ namespace nmea::detail
         }
     };
 
-    static const TalkerSymbol kTalkerSymbol;
-    static const DatumRefSymbol kDatumRefSymbol;
-    static const NSDirSymbol kNSSymbol;
-    static const EWDirSymbol kEWSymbol;
+    inline const TalkerSymbol kTalkerSymbol;
+    inline const DatumRefSymbol kDatumRefSymbol;
+    inline const NSDirSymbol kNSSymbol;
+    inline const EWDirSymbol kEWSymbol;
 
     template <typename Iterator, typename DirSymbol, int DegreeLen>
     struct lat_lon_grammar : qi::grammar<Iterator, NmeaLatLonRep()>
